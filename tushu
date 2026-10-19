@@ -1,0 +1,548 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include<stdio.h>
+#include<stdlib.h>//system
+#include<conio.h> //_getch
+#include<string.h>
+#include<math.h> 
+#define LEN sizeof(struct book) 
+struct book {
+	char num[20], aut[20], pub[20], name[20], cat[20];//书号，作者，出版社，书名 ,类别 
+	float prince;//价格
+	int many;//库存余量  
+	struct book* next;//链表 
+};
+void bookmenu();//图书系统菜单  
+void addbook();//新增图书
+void delbook();//删除图书
+void cxbook();//查询图书 
+void xgbook();//修改图书 
+void jjll();//直接打印 
+void llbook();//浏览图书
+void ssll();//书号降序浏览
+void jxll(); //书号升序浏览
+void ptjts();
+int tjts();//统计图书数量 
+
+int main()
+{
+	system("color 3F");
+	system("title 图书馆管理系统");
+	bookmenu();
+	_getch();
+	return 0;
+}
+
+void bookmenu() {
+	printf("****************************************************");
+	printf("\n\n 1.增加图书\n\n");
+	printf("\n\n 2.删除图书\n\n");
+	printf("\n\n 3.修改图书信息\n\n");
+	printf("\n\n 4.图书浏览\n\n");
+	printf("\n\n 5.图书查询\n\n");
+	printf("\n\n 6.图书数量统计\n\n");
+	printf("请输入数字选择系统功能\n\n");
+	printf("****************************************************");
+	int flag;
+	flag = _getch();
+	system("cls");
+	switch (flag) {
+	case 49:addbook(); break;
+	case 50:delbook(); break;
+	case 51:xgbook(); break;
+	case 52:llbook(); break;
+	case 53:cxbook(); break;
+	case 54:ptjts(); break;
+	}
+}
+
+void addbook() {
+	FILE* fp;
+	//修复：变量i初始化，解决C4700
+	char i = 0;
+	char num[20], aut[20], pub[20], name[20], cat[20];
+	float prince;
+	int many;
+	if ((fp = fopen("library.txt", "r")) == NULL)
+	{
+		fp = fopen("library.txt", "w");
+		fclose(fp);
+	}
+	fp = fopen("library.txt", "a");
+	printf("\n请按以下格式输入图书信息:\n书号 书名 作者 出版社 类别 进库量 单价");
+	for (; i != 27;)
+	{
+		printf("请输入:\n");
+		scanf("%s%s%s%s%s%d%f", num, name, aut, pub, cat, &many, &prince);
+		fprintf(fp, "%-8s%-9s%-14s%-16s%-18s%-7d%-8.2f\n", num, name, aut, pub, cat, many, prince);
+		printf("继续输入请按回车，结束输入请按Esc\n");
+		i = _getch();
+		for (; i != 13 && i != 27;)
+			i = _getch();
+	}
+	fclose(fp);
+	printf("\n保存成功，按任意键返回上一层!");
+	(void)_getch();
+	system("cls");
+	bookmenu();
+}
+
+void delbook() {
+	struct book* head = NULL;
+	//修复：指针全部初始化NULL，解决C4703
+	struct book* p = NULL, * p1 = NULL, * p2 = NULL;
+	int tmany = 0, n = 0, j, k;
+	float tprice = 0;
+	char tnam[20] = { '\0' }, taut[20] = { '\0' }, tcat[20] = { '\0' }, tpub[20] = { '\0' }, tnum[20] = { '\0' };
+	char jjnam[20] = { '\0' };
+	FILE* fp;
+	if ((fp = fopen("library.txt", "r")) == NULL)
+	{
+		system("cls");
+		printf("\n记录文件不存在!按任意键返回");
+		(void)_getch();
+		bookmenu();
+	}
+	else
+	{
+		system("cls");
+		printf("\n请输入你要删除的书名:");
+		scanf("%s", jjnam);
+		fp = fopen("library.txt", "r");
+		j = tjts();
+		for (k = 0; k < j; k++)
+		{
+			fscanf(fp, "%s%s%s%s%s%d%f", tnum, tnam, taut, tpub, tcat, &tmany, &tprice);
+			if (strcmp(jjnam, tnam))
+			{
+				n++;
+				if (n == 1)
+				{
+					p1 = p2 = (struct book*)malloc(LEN);
+					head = p1;
+				}
+				else
+				{
+					p2->next = p1;
+					p2 = p1;
+					p1 = (struct book*)malloc(LEN);
+				}
+				strcpy(p1->num, tnum);
+				strcpy(p1->name, tnam);
+				strcpy(p1->aut, taut);
+				strcpy(p1->pub, tpub);
+				strcpy(p1->cat, tcat);
+				p1->many = tmany;
+				p1->prince = tprice;
+			}
+		}
+		if (n == 0)
+		{
+			head = NULL;
+		}
+		else
+		{
+			p2->next = p1;
+			p1->next = NULL;
+			fclose(fp);
+		}
+	}
+	fp = fopen("library.txt", "w");
+	fclose(fp);
+	fp = fopen("library.txt", "a");
+	p = head;
+	for (; p != NULL;)
+	{
+		fprintf(fp, "%-8s%-9s%-14s%-16s%-18s%-7d%-8.2f\n", p->num, p->name, p->aut, p->pub, p->cat, p->many, p->prince);
+		p = p->next;
+	}
+	fclose(fp);
+	printf("\n删除成功 \n按任意键返回上一层\n");
+	(void)_getch();
+	system("cls");
+	bookmenu();
+}
+
+void xgbook() {
+	FILE* fp;
+	struct book* head = NULL;
+	//修复：指针初始化
+	struct book* p = NULL, * p1 = NULL, * p2 = NULL;
+	char sname[20] = { '\0' }, saut[20] = { '\0' }, scat[20] = { '\0' }, spub[20] = { '\0' }, snum[20] = { '\0' };
+	char xname[20] = { '\0' }, xaut[20] = { '\0' }, xcat[20] = { '\0' }, xpub[20] = { '\0' }, xnum[20] = { '\0' };
+	float sprince, xprince;
+	int smany, jj, k, n = 0, xmany;
+	printf("请输入要修改后的图书信息:\n书号 书名 作者 出版社 类别 进库量 单价\n");
+	scanf("%s%s%s%s%s%d%f", xnum, xname, xaut, xpub, xcat, &xmany, &xprince);
+	fp = fopen("library.txt", "r");
+	jj = tjts();
+	for (k = 0; k < jj; k++) {
+		fscanf(fp, "%s%s%s%s%s%d%f", snum, sname, saut, spub, scat, &smany, &sprince);
+		n++;
+		if (n == 1) {
+			p1 = p2 = (struct book*)malloc(LEN);
+			head = p1;
+		}
+		else
+		{
+			p2->next = p1;
+			p2 = p1;
+			p1 = (struct book*)malloc(LEN);
+		}
+		if (strcmp(xname, sname)) {
+			strcpy(p1->num, snum);
+			strcpy(p1->name, sname);
+			strcpy(p1->aut, saut);
+			strcpy(p1->pub, spub);
+			strcpy(p1->cat, scat);
+			p1->many = smany;
+			p1->prince = sprince;
+		}
+		else {
+			strcpy(p1->num, xnum);
+			strcpy(p1->name, xname);
+			strcpy(p1->aut, xaut);
+			strcpy(p1->pub, xpub);
+			strcpy(p1->cat, xcat);
+			p1->many = xmany;
+			p1->prince = xprince;
+		}
+	}
+	p2->next = p1;
+	p1->next = NULL;
+	fclose(fp);
+	fp = fopen("library.txt", "w");
+	fclose(fp);
+	fp = fopen("library.txt", "a");
+	p = head;
+	for (; p != NULL;)
+	{
+		fprintf(fp, "%-8s%-9s%-14s%-16s%-18s%-7d%-8.2f\n", p->num, p->name, p->aut, p->pub, p->cat, p->many, p->prince);
+		p = p->next;
+	}
+	fclose(fp);
+	system("cls");
+	printf("\n修改成功 \n按任意键返回上一层\n");
+	(void)_getch();
+	system("cls");
+	bookmenu();
+}
+
+void cxbook() {
+	FILE* fp;
+	int k = 0, many = 0, m = 0, n = 0;
+	float price = 0;
+	char nam[20] = { '\0' }, aut[20] = { '\0' }, cat[20] = { '\0' }, pub[20] = { '\0' }, num[20] = { '\0' };
+	char chazhao[20] = { '\0' };
+	if ((fp = fopen("library.txt", "r")) == NULL)
+	{
+		system("cls");
+		printf("\n记录文件不存在!按任意键返回");
+		(void)_getch();
+		bookmenu();
+	}
+	system("cls");
+	printf("请输入书号,书名,作者或类别查询：\n");
+	scanf("%s", chazhao);
+	system("cls");
+	m = tjts();
+	for (n = 0; n < m; n++)
+	{
+		fscanf(fp, "%s%s%s%s%s%d%f", num, nam, aut, pub, cat, &many, &price);
+		if (!strcmp(chazhao, num) || !strcmp(chazhao, nam) || !strcmp(chazhao, aut) || !strcmp(chazhao, cat))
+		{
+			if (k == 0)
+			{
+				printf("查询结果:\n\n");
+				printf("书号\t书名\t作者\t\t出版社\t\t类别\t\t现存量\t单价\n");
+			}
+			printf("%-8s%-9s%-14s%-16s%-18s%-7d%-8.2f\n", num, nam, aut, pub, cat, many, price);
+			k++;
+		}
+	}
+	if (k == 0)
+	{
+		system("cls");
+		printf("\n无符合记录!\n");
+		(void)_getch();
+		bookmenu();
+	}
+	fclose(fp);
+	(void)_getch();
+	bookmenu();
+}
+
+void llbook() {
+	int flag;
+	printf("\n\n1.按照书号降序浏览\n\n");
+	printf("\n\n 2.按照书号升序浏览\n\n");
+	printf("\n\n3.直接浏览（报表输出打印）\n\n");
+	printf("\n\n4.返回上一级\n\n");
+	printf("\n\n请输入数字选择功能\n\n");
+	flag = _getch();
+	switch (flag) {
+	case 49:ssll(); break;
+	case 50:jxll(); break;
+	case 51:jjll(); break;
+	case 52: { system("cls"); bookmenu(); }
+	}
+}
+
+void ssll() {//书号降序
+	struct book* head = NULL;
+	//修复指针初始化
+	struct book* p = NULL, * p1 = NULL, * p2 = NULL;
+	int many = 0, n = 0, j, k;
+	float prince = 0;
+	char name[20] = { '\0' }, aut[20] = { '\0' }, cat[20] = { '\0' }, pub[20] = { '\0' }, num[20] = { '\0' };
+	float kprince;
+	char kname[20] = { '\0' }, kaut[20] = { '\0' }, kcat[20] = { '\0' }, kpub[20] = { '\0' }, knum[20] = { '\0' };
+	int kmany;
+	FILE* fp;
+	if ((fp = fopen("library.txt", "r")) == NULL)
+	{
+		system("cls");
+		printf("\n记录文件不存在!按任意键返回");
+		(void)_getch();
+		bookmenu();
+	}
+	else
+	{
+		system("cls");
+		fp = fopen("library.txt", "r");
+		j = tjts();
+		for (k = 0; k < j; k++)
+		{
+			fscanf(fp, "%s%s%s%s%s%d%f", num, name, aut, pub, cat, &many, &prince);
+			n++;
+			if (n == 1)
+			{
+				p1 = p2 = (struct book*)malloc(LEN);
+				head = p1;
+			}
+			else
+			{
+				p2->next = p1;
+				p2 = p1;
+				p1 = (struct book*)malloc(LEN);
+			}
+			strcpy(p1->num, num);
+			strcpy(p1->name, name);
+			strcpy(p1->aut, aut);
+			strcpy(p1->pub, pub);
+			strcpy(p1->cat, cat);
+			p1->many = many;
+			p1->prince = prince;
+		}
+		if (n == 0)
+		{
+			head = NULL;
+		}
+		else
+		{
+			p2->next = p1;
+			p1->next = NULL;
+			fclose(fp);
+		}
+	}
+	for (k = 0; k < j; k++) {
+		p = head;
+		for (; p->next != NULL;)
+		{
+			if (strcmp(p->num, p->next->num) >= 0)
+			{
+				strcpy(knum, p->num);
+				strcpy(kname, p->name);
+				strcpy(kaut, p->aut);
+				strcpy(kpub, p->pub);
+				strcpy(kcat, p->cat);
+				kmany = p->many;
+				kprince = p->prince;
+
+				strcpy(p->num, p->next->num);
+				strcpy(p->name, p->next->name);
+				strcpy(p->aut, p->next->aut);
+				strcpy(p->pub, p->next->pub);
+				strcpy(p->cat, p->next->cat);
+				p->many = p->next->many;
+				p->prince = p->next->prince;
+
+				strcpy(p->next->num, knum);
+				strcpy(p->next->name, kname);
+				strcpy(p->next->aut, kaut);
+				strcpy(p->next->pub, kpub);
+				strcpy(p->next->cat, kcat);
+				p->next->many = kmany;
+				p->next->prince = kprince;
+			}
+			p = p->next;
+		}
+	}
+	p = head;
+	printf("书号\t书名\t作者\t\t出版社\t\t类别\t\t库存量\t单价\n");
+	for (; p != NULL;) {
+		printf("%-8s%-9s%-14s%-16s%-18s%-7d%-8.2f\n", p->num, p->name, p->aut, p->pub, p->cat, p->many, p->prince);
+		p = p->next;
+	}
+	printf("\n按任意键返回上一层\n");
+	(void)_getch();
+	system("cls");
+	llbook();
+}
+
+void jxll() {//书号升序
+	struct book* head = NULL;
+	//修复指针初始化
+	struct book* p = NULL, * p1 = NULL, * p2 = NULL;
+	int many = 0, n = 0, j, k;
+	float prince = 0;
+	char name[20] = { '\0' }, aut[20] = { '\0' }, cat[20] = { '\0' }, pub[20] = { '\0' }, num[20] = { '\0' };
+	float kprince;
+	char kname[20] = { '\0' }, kaut[20] = { '\0' }, kcat[20] = { '\0' }, kpub[20] = { '\0' }, knum[20] = { '\0' };
+	int kmany;
+	FILE* fp;
+	if ((fp = fopen("library.txt", "r")) == NULL)
+	{
+		system("cls");
+		printf("\n记录文件不存在!按任意键返回");
+		(void)_getch();
+		bookmenu();
+	}
+	else
+	{
+		system("cls");
+		fp = fopen("library.txt", "r");
+		j = tjts();
+		for (k = 0; k < j; k++)
+		{
+			fscanf(fp, "%s%s%s%s%s%d%f", num, name, aut, pub, cat, &many, &prince);
+			n++;
+			if (n == 1)
+			{
+				p1 = p2 = (struct book*)malloc(LEN);
+				head = p1;
+			}
+			else
+			{
+				p2->next = p1;
+				p2 = p1;
+				p1 = (struct book*)malloc(LEN);
+			}
+			strcpy(p1->num, num);
+			strcpy(p1->name, name);
+			strcpy(p1->aut, aut);
+			strcpy(p1->pub, pub);
+			strcpy(p1->cat, cat);
+			p1->many = many;
+			p1->prince = prince;
+		}
+		if (n == 0)
+		{
+			head = NULL;
+		}
+		else
+		{
+			p2->next = p1;
+			p1->next = NULL;
+			fclose(fp);
+		}
+	}
+	for (k = 0; k < j; k++) {
+		p = head;
+		for (; p->next != NULL;)
+		{
+			if (strcmp(p->num, p->next->num) <= 0)
+			{
+				strcpy(knum, p->num);
+				strcpy(kname, p->name);
+				strcpy(kaut, p->aut);
+				strcpy(kpub, p->pub);
+				strcpy(kcat, p->cat);
+				kmany = p->many;
+				kprince = p->prince;
+
+				strcpy(p->num, p->next->num);
+				strcpy(p->name, p->next->name);
+				strcpy(p->aut, p->next->aut);
+				strcpy(p->pub, p->next->pub);
+				strcpy(p->cat, p->next->cat);
+				p->many = p->next->many;
+				p->prince = p->next->prince;
+
+				strcpy(p->next->num, knum);
+				strcpy(p->next->name, kname);
+				strcpy(p->next->aut, kaut);
+				strcpy(p->next->pub, kpub);
+				strcpy(p->next->cat, kcat);
+				p->next->many = kmany;
+				p->next->prince = kprince;
+			}
+			p = p->next;
+		}
+	}
+	p = head;
+	printf("书号\t书名\t作者\t\t出版社\t\t类别\t\t库存量\t单价\n");
+	for (; p != NULL;) {
+		printf("%-8s%-9s%-14s%-16s%-18s%-7d%-8.2f\n", p->num, p->name, p->aut, p->pub, p->cat, p->many, p->prince);
+		p = p->next;
+	}
+	printf("\n按任意键返回上一层\n");
+	(void)_getch();
+	system("cls");
+	llbook();
+}
+
+void jjll() {
+	FILE* fp;
+	int n = 0;
+	int k = 0, m = 0, many = 0;
+	float price = 0;
+	char nam[20] = { '\0' }, aut[20] = { '\0' }, cat[20] = { '\0' }, pub[20] = { '\0' }, num[20] = { '\0' };
+	if ((fp = fopen("library.txt", "r")) == NULL)
+	{
+		system("cls");
+		printf("\n记录文件不存在!按任意键返回");
+		(void)_getch();
+		bookmenu();
+	}
+	n = tjts();
+	if (n == 0)
+	{
+		system("cls");
+		printf("\n无任何记录!");
+	}
+	fp = fopen("library.txt", "r");
+	system("cls");
+	printf("书号\t书名\t作者\t\t出版社\t\t类别\t\t库存量\t单价\n");
+	for (m = 0; m < n; m++)
+	{
+		fscanf(fp, "%s%s%s%s%s%d%f", num, nam, aut, pub, cat, &many, &price);
+		printf("%-8s%-9s%-14s%-16s%-18s%-7d%-8.2f\n", num, nam, aut, pub, cat, many, price);
+	}
+	fclose(fp);
+	printf("\n按任意键返回\n");
+	(void)_getch();
+	system("cls");
+	llbook();
+}
+
+int tjts()
+{
+	FILE* fp;
+	int txcl = 0, n;
+	float tprice = 0;
+	char tname[20] = { '\0' }, tauthor[20] = { '\0' }, tchuban[20] = { '\0' }, tkind[20] = { '\0' }, tshuhao[20] = { '\0' };
+	fp = fopen("library.txt", "r");
+	for (n = 0; !feof(fp); n++)
+		fscanf(fp, "%s%s%s%s%s%d%f", tshuhao, tname, tauthor, tchuban, tkind, &txcl, &tprice);
+	n--;
+	fclose(fp);
+	return (n);
+}
+
+void ptjts() {
+	int nums = tjts();
+	printf("\n\n库内所有图书的数目为：%d\n\n\n请摁任意键返回上一级\n", nums);
+	(void)_getch();
+	system("cls");
+	bookmenu();
+}
